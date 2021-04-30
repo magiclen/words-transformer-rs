@@ -5,6 +5,8 @@ extern crate word_dictionary;
 #[macro_use]
 extern crate lazy_static_include;
 
+extern crate copypasta;
+
 mod gui;
 mod logo;
 
@@ -12,6 +14,8 @@ use iced::{
     button, canvas, text_input, window, Align, Column, Container, Element, HorizontalAlignment,
     Length, Row, Sandbox, Settings, Text, VerticalAlignment,
 };
+
+use copypasta::{ClipboardContext, ClipboardProvider};
 
 use word_dictionary::*;
 
@@ -30,6 +34,8 @@ lazy_static_include_bytes! {
     /// Source Han Sans HW TC Regular
     FONT => "assets/fonts/SourceHanSansHWTC-Regular.ttf",
 }
+
+// static FONT: &[u8] = include_bytes!("../assets/fonts/SourceHanSansHWTC-Regular2.ttf");
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum FoundState {
@@ -68,6 +74,22 @@ struct WordsTransformer {
 }
 
 impl WordsTransformer {
+    fn paste_search(&mut self) {
+        let mut ctx = ClipboardContext::new().unwrap();
+
+        if let Ok(t) = ctx.get_contents() {
+            self.ui_states.keyword = t;
+
+            self.search();
+        }
+    }
+
+    fn no_search(&mut self) {
+        self.ui_states.result.clear();
+        self.ui_states.evolution.clear();
+        self.found_state = FoundState::Default;
+    }
+
     fn search(&mut self) {
         let s = self.ui_states.keyword.trim();
 
@@ -122,10 +144,10 @@ impl WordsTransformer {
         self.found_state = FoundState::Found;
     }
 
-    fn no_search(&mut self) {
-        self.ui_states.result.clear();
-        self.ui_states.evolution.clear();
-        self.found_state = FoundState::Default;
+    fn copy_result(&mut self) {
+        let mut ctx = ClipboardContext::new().unwrap();
+
+        ctx.set_contents(self.ui_states.result.clone()).unwrap();
     }
 
     fn search_next(&mut self) {
@@ -182,6 +204,32 @@ impl WordsTransformer {
             self.dictionary.get_left(find_index).unwrap(),
             self.dictionary.get_all_right_to_string(find_index).unwrap()
         );
+    }
+
+    fn delete(&mut self) {
+        // TODO: Should show up a confirm box to ask the user whether to delete.
+    }
+
+    fn add(&mut self) {
+        let left = self.ui_states.key.trim().to_string();
+        let right = self.ui_states.value.trim().to_string();
+
+        if self.dictionary.find_left_strictly(&left, 0).is_some() {
+            // TODO: Should show up a confirm box to ask the user whether to edit.
+        }
+
+        #[allow(clippy::single_match)]
+        match self.dictionary.add_edit(&left, &right) {
+            Ok(_add) => {
+                self.ui_states.key.clear();
+                self.ui_states.value.clear();
+
+                self.search();
+            }
+            Err(_) => {
+                // TODO: Should show up a message box to tell the user it failed. But currently, no dialog supports.
+            }
+        }
     }
 }
 
@@ -243,16 +291,24 @@ impl Sandbox for WordsTransformer {
             Message::ValueDataChanged(data) => {
                 self.ui_states.value = data;
             }
-            Message::PasteSearch => {}
+            Message::PasteSearch => {
+                self.paste_search();
+            }
             Message::Search => {
                 self.search();
             }
-            Message::Copy => {}
+            Message::Copy => {
+                self.copy_result();
+            }
             Message::Next => {
                 self.search_next();
             }
-            Message::Delete => {}
-            Message::Add => {}
+            Message::Delete => {
+                self.delete();
+            }
+            Message::Add => {
+                self.add();
+            }
         }
     }
 

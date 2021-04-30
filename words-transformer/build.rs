@@ -6,8 +6,8 @@ use std::fs;
 
 use image::GenericImageView;
 
-const LOGO_INPUT_PATH: &str = concat_with_file_separator_build!("assets", "icons", "logo.png");
-const LOGO_OUTPUT_PATH: &str = concat_with_file_separator_build!("src", "logo.rs");
+const LOGO_INPUT_PATH: &str = concat_with_file_separator!("assets", "icons", "logo.png");
+const LOGO_OUTPUT_PATH: &str = concat_with_file_separator!("src", "logo.rs");
 
 fn main() {
     // Load the logo image (in common formats) and turn it to RGBA to store in a Rust code file as a constant.

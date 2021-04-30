@@ -8,7 +8,7 @@ use std::path::Path;
 
 use word_dictionary::*;
 
-static DIRECTORY_PATH: &str = concat_with_file_separator_build!("tests", "data");
+static DIRECTORY_PATH: &str = concat_with_file_separator!("tests", "data");
 
 #[test]
 fn correct_usage() {

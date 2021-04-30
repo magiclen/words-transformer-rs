@@ -9,8 +9,9 @@ publish = false
 word-dictionary = { path = "../word-dictionary"  }
 
 iced = { version = "0.3", features = ["canvas"]  }
-lazy-static-include = "3"
+lazy-static-include = "3.0.7"
 once_cell = "1.5"
+copypasta = "0.7.1"
 
 [build-dependencies]
 slash-formatter = "3.1"
