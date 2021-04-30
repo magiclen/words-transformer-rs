@@ -8,6 +8,8 @@ extern crate lazy_static_include;
 extern crate copypasta;
 
 mod gui;
+
+#[rustfmt::skip]
 mod logo;
 
 use iced::{
