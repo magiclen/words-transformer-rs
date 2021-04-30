@@ -14,3 +14,6 @@ include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
 trim-in-place = "0.1.5"
+
+[dev-dependencies]
+slash-formatter = "3.1"

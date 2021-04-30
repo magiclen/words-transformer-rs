@@ -1,15 +1,14 @@
 extern crate word_dictionary;
 
+#[macro_use]
+extern crate slash_formatter;
+
 use std::fs;
 use std::path::Path;
 
 use word_dictionary::*;
 
-#[cfg(unix)]
-static DIRECTORY_PATH: &str = "tests/data";
-
-#[cfg(windows)]
-static DIRECTORY_PATH: &str = r"tests\data";
+static DIRECTORY_PATH: &str = concat_with_file_separator_build!("tests", "data");
 
 #[test]
 fn correct_usage() {
