@@ -1,0 +1,16 @@
+[package]
+name = "word-dictionary"
+version = "0.1.0"
+authors = ["Magic Len <len@magiclen.org>"]
+edition = "2018"
+repository = "https://github.com/magiclen/words-transformer-rs"
+homepage = "https://magiclen.org/words-transformer-rs"
+keywords = ["translation", "dictionary"]
+categories = ["data-structures"]
+description = "This crate provides a data structure for word mapping. It can be used for language translation."
+readme = "README.md"
+license = "MIT"
+include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
+
+[dependencies]
+trim-in-place = "0.1.5"
