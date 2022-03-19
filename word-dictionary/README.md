@@ -8,8 +8,6 @@ This crate provides a data structure for word mapping. It can be used for langua
 ## Examples
 
 ```rust
-extern crate word_dictionary;
-
 use word_dictionary::Dictionary;
 
 let mut dictionary = Dictionary::new("tests/data/dictionary.txt"); // input a dictionary file

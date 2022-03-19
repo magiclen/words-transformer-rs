@@ -1,10 +1,6 @@
-#[macro_use]
-extern crate slash_formatter;
-extern crate image;
-
 use std::fs;
 
-use image::GenericImageView;
+use slash_formatter::concat_with_file_separator;
 
 const LOGO_INPUT_PATH: &str = concat_with_file_separator!("assets", "icons", "logo.png");
 const LOGO_OUTPUT_PATH: &str = concat_with_file_separator!("src", "logo.rs");

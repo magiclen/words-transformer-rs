@@ -1,14 +1,9 @@
-extern crate word_dictionary;
-
-#[macro_use]
-extern crate slash_formatter;
-
 use std::fs;
 use std::path::Path;
 
 use word_dictionary::*;
 
-static DIRECTORY_PATH: &str = concat_with_file_separator!("tests", "data");
+static DIRECTORY_PATH: &str = slash_formatter::concat_with_file_separator!("tests", "data");
 
 #[test]
 fn correct_usage() {
@@ -50,15 +45,15 @@ Absu = 阿布蘇";
     assert_eq!(Some(1), dictionary.find_left("A", 1));
     assert_eq!(Some(1), dictionary.find_right("阿", 1));
 
-    assert_eq!(true, dictionary.add_edit("Alric", "阿里克").unwrap());
+    assert!(dictionary.add_edit("Alric", "阿里克").unwrap());
     assert_eq!(7, dictionary.count());
     assert_eq!(Some("阿里克"), dictionary.get_right(6));
 
-    assert_eq!(false, dictionary.add_edit("Abez", "阿別茲").unwrap());
+    assert!(!dictionary.add_edit("Abez", "阿別茲").unwrap());
     assert_eq!(7, dictionary.count());
     assert_eq!(Some("阿別茲"), dictionary.get_right(0));
 
-    assert_eq!(true, dictionary.delete(4).unwrap());
+    assert!(dictionary.delete(4).unwrap());
 
     let dictionary_data = "Abez = 阿別茲 --> 阿貝茲 --> 阿別茲
 Abhai = 阿拜
@@ -108,5 +103,5 @@ Abhai = 阿拜";
     dictionary.read_data().unwrap();
 
     assert!(dictionary.add_edit("Abez", "阿貝茲").is_err());
-    assert_eq!(false, dictionary.delete(2).unwrap());
+    assert!(!dictionary.delete(2).unwrap());
 }

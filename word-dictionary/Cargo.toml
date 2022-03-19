@@ -1,8 +1,8 @@
 [package]
 name = "word-dictionary"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Magic Len <len@magiclen.org>"]
-edition = "2018"
+edition = "2021"
 repository = "https://github.com/magiclen/words-transformer-rs"
 homepage = "https://magiclen.org/words-transformer-rs"
 keywords = ["translation", "dictionary"]

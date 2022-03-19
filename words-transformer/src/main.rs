@@ -1,11 +1,5 @@
-extern crate iced;
-
-extern crate word_dictionary;
-
 #[macro_use]
 extern crate lazy_static_include;
-
-extern crate copypasta;
 
 mod gui;
 
@@ -529,7 +523,7 @@ fn main() -> Result<(), iced::Error> {
             ),
             ..window::Settings::default()
         },
-        default_font: Some(&*FONT),
+        default_font: Some(*FONT),
         default_text_size: FONT_SIZE,
         ..Settings::default()
     })

@@ -1,5 +1,3 @@
-extern crate iced;
-
 use iced::canvas::{Cursor, Frame, Geometry, LineCap, LineJoin, Path, Program, Stroke};
 use iced::{Color, Point, Rectangle};
 

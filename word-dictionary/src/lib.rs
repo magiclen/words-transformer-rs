@@ -6,8 +6,6 @@ This crate provides a data structure for word mapping. It can be used for langua
 ## Examples
 
 ```rust
-extern crate word_dictionary;
-
 use word_dictionary::Dictionary;
 
 let mut dictionary = Dictionary::new("tests/data/dictionary.txt"); // input a dictionary file
@@ -32,8 +30,6 @@ Althasol = 阿爾瑟索
 */
 ```
 */
-
-extern crate trim_in_place;
 
 use std::fs::File;
 use std::io::{BufRead, BufReader, ErrorKind, Write};
