@@ -16,7 +16,6 @@ copypasta = "0.7.1"
 [build-dependencies]
 slash-formatter = "3.1"
 image = "0.24"
-crossbeam-epoch = { version = "=0.9.7", optional = true } # 0.9.8 cannot be compiled
 
 [features]
 "glow" = ["iced/glow"]
