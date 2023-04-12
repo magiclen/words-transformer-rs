@@ -31,22 +31,23 @@ Althasol = 阿爾瑟索
 ```
 */
 
-use std::fs::File;
-use std::io::{BufRead, BufReader, ErrorKind, Write};
-use std::path::PathBuf;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader, ErrorKind, Write},
+    path::PathBuf,
+};
 
 mod errors;
 
-use trim_in_place::TrimInPlace;
-
 pub use errors::*;
+use trim_in_place::TrimInPlace;
 
 #[derive(Debug)]
 pub struct Dictionary {
     /// The path of the dictionary file.
-    path: PathBuf,
+    path:  PathBuf,
     /// Left data.
-    left: Vec<String>,
+    left:  Vec<String>,
     /// Right data.
     right: Vec<Vec<String>>,
 }
@@ -56,9 +57,7 @@ impl Dictionary {
     #[inline]
     pub fn new<P: Into<PathBuf>>(path: P) -> Dictionary {
         Dictionary {
-            path: path.into(),
-            left: Vec::new(),
-            right: Vec::new(),
+            path: path.into(), left: Vec::new(), right: Vec::new()
         }
     }
 }
@@ -256,7 +255,7 @@ impl Dictionary {
             Err(err) if err.kind() == ErrorKind::NotFound => {
                 // it is okay with a file not found error
                 return Ok(());
-            }
+            },
             Err(err) => return Err(err.into()),
         };
 
@@ -287,9 +286,9 @@ impl Dictionary {
 
             if left_string.contains("-->") {
                 return Err(ReadError::Broken {
-                    line: line_counter,
+                    line:        line_counter,
                     left_string: String::from(left_string),
-                    reason: BrokenReason::BadLeftString,
+                    reason:      BrokenReason::BadLeftString,
                 });
             }
 
@@ -299,9 +298,9 @@ impl Dictionary {
 
             if let Some(index) = self.find_left_strictly(left_string, 0) {
                 return Err(ReadError::Broken {
-                    line: line_counter,
+                    line:        line_counter,
                     left_string: String::from(left_string),
-                    reason: BrokenReason::Duplicated {
+                    reason:      BrokenReason::Duplicated {
                         another_left_string: String::from(self.left[index].as_str()),
                     },
                 });
@@ -311,18 +310,18 @@ impl Dictionary {
                 Some(right_string) => right_string,
                 None => {
                     return Err(ReadError::Broken {
-                        line: line_counter,
+                        line:        line_counter,
                         left_string: String::from(left_string),
-                        reason: BrokenReason::NoRightString,
+                        reason:      BrokenReason::NoRightString,
                     })
-                }
+                },
             };
 
             if tokenizer.next().is_some() {
                 return Err(ReadError::Broken {
-                    line: line_counter,
+                    line:        line_counter,
                     left_string: String::from(left_string),
-                    reason: BrokenReason::BadRightString {
+                    reason:      BrokenReason::BadRightString {
                         right_string: String::from(right_string),
                     },
                 });
@@ -333,9 +332,9 @@ impl Dictionary {
             for s in right_string.split("-->").map(|s| s.trim()) {
                 if s.is_empty() {
                     return Err(ReadError::Broken {
-                        line: line_counter,
+                        line:        line_counter,
                         left_string: String::from(left_string),
-                        reason: BrokenReason::BadRightString {
+                        reason:      BrokenReason::BadRightString {
                             right_string: String::from(right_string),
                         },
                     });

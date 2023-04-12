@@ -6,16 +6,13 @@ mod gui;
 #[rustfmt::skip]
 mod logo;
 
+use copypasta::{ClipboardContext, ClipboardProvider};
+use gui::*;
 use iced::{
     button, canvas, text_input, window, Align, Column, Container, Element, HorizontalAlignment,
     Length, Row, Sandbox, Settings, Text, VerticalAlignment,
 };
-
-use copypasta::{ClipboardContext, ClipboardProvider};
-
 use word_dictionary::*;
-
-use gui::*;
 
 const WINDOW_WIDTH: u32 = 450;
 const WINDOW_HEIGHT: u32 = 420;
@@ -42,31 +39,31 @@ enum FoundState {
 
 #[derive(Debug, Default)]
 struct UIStates {
-    keyword: String,
-    keyword_state: text_input::State,
-    result: String,
-    result_state: text_input::State,
-    evolution: String,
-    evolution_state: text_input::State,
-    key: String,
-    key_state: text_input::State,
-    value: String,
-    value_state: text_input::State,
+    keyword:            String,
+    keyword_state:      text_input::State,
+    result:             String,
+    result_state:       text_input::State,
+    evolution:          String,
+    evolution_state:    text_input::State,
+    key:                String,
+    key_state:          text_input::State,
+    value:              String,
+    value_state:        text_input::State,
     paste_search_state: button::State,
-    search_state: button::State,
-    copy_state: button::State,
-    next_state: button::State,
-    delete_state: button::State,
-    add_state: button::State,
+    search_state:       button::State,
+    copy_state:         button::State,
+    next_state:         button::State,
+    delete_state:       button::State,
+    add_state:          button::State,
 }
 
 #[derive(Debug)]
 struct WordsTransformer {
-    dictionary: Dictionary,
-    find_index: usize,
-    find_left: bool,
+    dictionary:  Dictionary,
+    find_index:  usize,
+    find_left:   bool,
     found_state: FoundState,
-    ui_states: UIStates,
+    ui_states:   UIStates,
 }
 
 impl WordsTransformer {
@@ -112,13 +109,13 @@ impl WordsTransformer {
                                         self.found_state = FoundState::NotFound;
 
                                         return;
-                                    }
+                                    },
                                 }
-                            }
+                            },
                         }
-                    }
+                    },
                 }
-            }
+            },
         };
 
         self.find_index = find_index;
@@ -157,12 +154,10 @@ impl WordsTransformer {
             if next_index == self.find_index {
                 match self.dictionary.find_right_strictly(s, find_index) {
                     Some(find_index) => (find_index, false),
-                    None => {
-                        match self.dictionary.find_right(s, find_index) {
-                            Some(find_index) => (find_index, false),
-                            None => (next_index, true),
-                        }
-                    }
+                    None => match self.dictionary.find_right(s, find_index) {
+                        Some(find_index) => (find_index, false),
+                        None => (next_index, true),
+                    },
                 }
             } else {
                 (next_index, true)
@@ -173,12 +168,10 @@ impl WordsTransformer {
             if next_index == self.find_index {
                 match self.dictionary.find_left_strictly(s, find_index) {
                     Some(find_index) => (find_index, true),
-                    None => {
-                        match self.dictionary.find_left(s, find_index) {
-                            Some(find_index) => (find_index, true),
-                            None => (next_index, false),
-                        }
-                    }
+                    None => match self.dictionary.find_left(s, find_index) {
+                        Some(find_index) => (find_index, true),
+                        None => (next_index, false),
+                    },
                 }
             } else {
                 (next_index, false)
@@ -221,10 +214,10 @@ impl WordsTransformer {
                 self.ui_states.value.clear();
 
                 self.search();
-            }
+            },
             Err(_) => {
                 // TODO: Should show up a message box to tell the user it failed. But currently, no dialog supports.
-            }
+            },
         }
     }
 }
@@ -274,37 +267,37 @@ impl Sandbox for WordsTransformer {
                 self.ui_states.keyword = data;
 
                 self.no_search();
-            }
+            },
             Message::ResultDataChanged(_) => {
                 // read only
-            }
+            },
             Message::EvolutionDataChanged(_) => {
                 // read only
-            }
+            },
             Message::KeyDataChanged(data) => {
                 self.ui_states.key = data;
-            }
+            },
             Message::ValueDataChanged(data) => {
                 self.ui_states.value = data;
-            }
+            },
             Message::PasteSearch => {
                 self.paste_search();
-            }
+            },
             Message::Search => {
                 self.search();
-            }
+            },
             Message::Copy => {
                 self.copy_result();
-            }
+            },
             Message::Next => {
                 self.search_next();
-            }
+            },
             Message::Delete => {
                 self.delete();
-            }
+            },
             Message::Add => {
                 self.add();
-            }
+            },
         }
     }
 

@@ -1,27 +1,21 @@
-use std::error::Error;
-use std::fmt::{self, Display, Formatter};
-use std::io;
+use std::{
+    error::Error,
+    fmt::{self, Display, Formatter},
+    io,
+};
 
 #[derive(Debug)]
 pub enum BrokenReason {
     BadLeftString,
     NoRightString,
-    BadRightString {
-        right_string: String,
-    },
-    Duplicated {
-        another_left_string: String,
-    },
+    BadRightString { right_string: String },
+    Duplicated { another_left_string: String },
 }
 
 #[derive(Debug)]
 pub enum ReadError {
     IOError(io::Error),
-    Broken {
-        line: usize,
-        left_string: String,
-        reason: BrokenReason,
-    },
+    Broken { line: usize, left_string: String, reason: BrokenReason },
 }
 
 impl From<io::Error> for ReadError {
@@ -44,26 +38,20 @@ impl Display for ReadError {
                 f.write_fmt(format_args!("broken at line {}, ", line))?;
 
                 match reason {
-                    BrokenReason::BadLeftString => {
-                        f.write_fmt(format_args!(
-                            "the left string {:?} is not correct",
-                            left_string
-                        ))
-                    }
-                    BrokenReason::NoRightString => {
-                        f.write_fmt(format_args!(
+                    BrokenReason::BadLeftString => f.write_fmt(format_args!(
+                        "the left string {:?} is not correct",
+                        left_string
+                    )),
+                    BrokenReason::NoRightString => f.write_fmt(format_args!(
                         "expected a \"=\" after the left string {:?} to concatenate a right string",
                         left_string
-                    ))
-                    }
+                    )),
                     BrokenReason::BadRightString {
                         right_string,
-                    } => {
-                        f.write_fmt(format_args!(
-                            "the right string {:?} is not correct",
-                            right_string
-                        ))
-                    }
+                    } => f.write_fmt(format_args!(
+                        "the right string {:?} is not correct",
+                        right_string
+                    )),
                     BrokenReason::Duplicated {
                         another_left_string,
                     } => {
@@ -78,9 +66,9 @@ impl Display for ReadError {
                                 left_string, another_left_string
                             ))
                         }
-                    }
+                    },
                 }
-            }
+            },
         }
     }
 }
@@ -112,7 +100,7 @@ impl Display for WriteError {
             WriteError::BadRightString => f.write_str("the right word is not correct"),
             WriteError::Duplicated => {
                 f.write_str("the pair of the left word and the right word is duplicated")
-            }
+            },
             WriteError::Same => f.write_str("the left word is equal to the right word"),
         }
     }

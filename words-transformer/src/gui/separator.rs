@@ -1,5 +1,7 @@
-use iced::canvas::{Cursor, Frame, Geometry, LineCap, LineJoin, Path, Program, Stroke};
-use iced::{Color, Point, Rectangle};
+use iced::{
+    canvas::{Cursor, Frame, Geometry, LineCap, LineJoin, Path, Program, Stroke},
+    Color, Point, Rectangle,
+};
 
 #[derive(Debug)]
 pub(crate) struct Separator;
@@ -13,10 +15,10 @@ impl<Message> Program<Message> for Separator {
         let line = Path::line(Point::new(0f32, half_height), Point::new(bounds.width, half_height));
 
         frame.stroke(&line, Stroke {
-            color: Color::from_rgb(0.82f32, 0.82f32, 0.82f32),
-            width: 1f32,
+            color:     Color::from_rgb(0.82f32, 0.82f32, 0.82f32),
+            width:     1f32,
             line_join: LineJoin::Miter,
-            line_cap: LineCap::Butt,
+            line_cap:  LineCap::Butt,
         });
 
         let line = Path::line(
@@ -25,10 +27,10 @@ impl<Message> Program<Message> for Separator {
         );
 
         frame.stroke(&line, Stroke {
-            color: Color::from_rgb(0.98f32, 0.98f32, 0.98f32),
-            width: 1f32,
+            color:     Color::from_rgb(0.98f32, 0.98f32, 0.98f32),
+            width:     1f32,
             line_join: LineJoin::Miter,
-            line_cap: LineCap::Butt,
+            line_cap:  LineCap::Butt,
         });
 
         vec![frame.into_geometry()]

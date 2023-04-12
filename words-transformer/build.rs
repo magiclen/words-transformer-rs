@@ -14,10 +14,9 @@ fn main() {
     let logo_vec_rgba = logo_image.to_rgba8().to_vec();
 
     let logo_rs = format!(
-        "/* DON'T EDIT. This file is auto-generated. */\npub(crate) const WIDTH: u32 = {};\npub(crate) const HEIGHT: u32 = {};\npub(crate) const DATA: &[u8] = &{:?};",
-        logo_width,
-        logo_height,
-        logo_vec_rgba
+        "/* DON'T EDIT. This file is auto-generated. */\npub(crate) const WIDTH: u32 = \
+         {};\npub(crate) const HEIGHT: u32 = {};\npub(crate) const DATA: &[u8] = &{:?};",
+        logo_width, logo_height, logo_vec_rgba
     );
 
     fs::write(LOGO_OUTPUT_PATH, logo_rs).unwrap();

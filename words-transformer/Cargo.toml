@@ -3,6 +3,7 @@ name = "words-transformer"
 version = "0.1.0"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
+rust-version = "1.61"
 publish = false
 
 [dependencies]
