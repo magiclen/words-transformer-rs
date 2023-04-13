@@ -9,7 +9,6 @@ homepage = "https://magiclen.org/words-transformer-rs"
 keywords = ["translation", "dictionary"]
 categories = ["data-structures"]
 description = "This crate provides a data structure for word mapping. It can be used for language translation."
-readme = "README.md"
 license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
