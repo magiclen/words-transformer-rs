@@ -32,7 +32,7 @@ const FONT_NAME: &str = "Source Han Sans HW TC";
 
 lazy_static_include_bytes! {
     /// Source Han Sans HW TC Regular
-    FONT => "assets/fonts/SourceHanSansHWTC-Regular.ttf",
+    FONT => "assets/fonts/SourceHanSansHWTC-Regular.otf",
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
