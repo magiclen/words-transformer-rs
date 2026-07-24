@@ -537,6 +537,7 @@ fn main() -> iced::Result {
         .settings(settings)
         .window(window::Settings {
             size: Size::new(WINDOW_WIDTH, WINDOW_HEIGHT),
+            position: window::Position::Centered,
             level: window::Level::AlwaysOnTop,
             icon: window::icon::from_rgba(logo::DATA.to_vec(), logo::WIDTH, logo::HEIGHT).ok(),
             ..window::Settings::default()
