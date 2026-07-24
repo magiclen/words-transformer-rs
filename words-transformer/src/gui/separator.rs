@@ -1,7 +1,6 @@
 use iced::{
-    mouse,
+    Color, Point, Rectangle, Renderer, Theme, mouse,
     widget::canvas::{Frame, Geometry, LineCap, LineJoin, Path, Program, Stroke, Style},
-    Color, Point, Rectangle, Renderer, Theme,
 };
 
 #[derive(Debug)]

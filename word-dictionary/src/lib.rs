@@ -313,7 +313,7 @@ impl Dictionary {
                         line:        line_counter,
                         left_string: String::from(left_string),
                         reason:      BrokenReason::NoRightString,
-                    })
+                    });
                 },
             };
 

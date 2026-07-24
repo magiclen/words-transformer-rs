@@ -8,11 +8,12 @@ use std::borrow::Cow;
 use copypasta::{ClipboardContext, ClipboardProvider};
 use gui::*;
 use iced::{
+    Background, Border, Color, Element, Font, Length, Pixels, Settings, Size, Task, Theme,
     alignment::{Horizontal, Vertical},
     widget::{
         button, canvas, center, column, container, mouse_area, opaque, row, stack, text, text_input,
     },
-    window, Background, Border, Color, Element, Font, Length, Pixels, Settings, Size, Task, Theme,
+    window,
 };
 use lazy_static_include::*;
 use word_dictionary::*;
@@ -333,11 +334,7 @@ impl WordsTransformer {
                 .width(Length::Fixed(BUTTON_WIDTH))
                 .height(Length::Fixed(BUTTON_HEIGHT));
 
-            if self.found_state == FoundState::Found {
-                btn.on_press(Message::Copy)
-            } else {
-                btn
-            }
+            if self.found_state == FoundState::Found { btn.on_press(Message::Copy) } else { btn }
         };
 
         let row_result = row![ti_result, btn_copy]
@@ -354,11 +351,7 @@ impl WordsTransformer {
             let btn =
                 button(fill_label("Next")).width(Length::Fill).height(Length::Fixed(BUTTON_HEIGHT));
 
-            if self.found_state == FoundState::Found {
-                btn.on_press(Message::Next)
-            } else {
-                btn
-            }
+            if self.found_state == FoundState::Found { btn.on_press(Message::Next) } else { btn }
         };
 
         let btn_delete = {
@@ -366,11 +359,7 @@ impl WordsTransformer {
                 .width(Length::Fill)
                 .height(Length::Fixed(BUTTON_HEIGHT));
 
-            if self.found_state == FoundState::Found {
-                btn.on_press(Message::Delete)
-            } else {
-                btn
-            }
+            if self.found_state == FoundState::Found { btn.on_press(Message::Delete) } else { btn }
         };
 
         let separator = canvas(Separator).width(Length::Fill).height(Length::Fixed(3f32));
@@ -504,10 +493,12 @@ fn dialog_card<'a>(message: String, confirm: bool) -> Element<'a, Message> {
                 .on_press(Message::ModalConfirm),
         ]
     } else {
-        row![button(fill_label("OK"))
-            .width(Length::Fixed(BUTTON_WIDTH))
-            .height(Length::Fixed(BUTTON_HEIGHT))
-            .on_press(Message::ModalCancel)]
+        row![
+            button(fill_label("OK"))
+                .width(Length::Fixed(BUTTON_WIDTH))
+                .height(Length::Fixed(BUTTON_HEIGHT))
+                .on_press(Message::ModalCancel)
+        ]
     }
     .spacing(CONTROL_SPACING);
 
