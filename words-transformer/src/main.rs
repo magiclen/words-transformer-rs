@@ -225,7 +225,9 @@ impl WordsTransformer {
 #[derive(Debug, Clone)]
 enum Message {
     KeywordDataChanged(String),
+    #[allow(dead_code)]
     ResultDataChanged(String),
+    #[allow(dead_code)]
     EvolutionDataChanged(String),
     KeyDataChanged(String),
     ValueDataChanged(String),
@@ -301,7 +303,7 @@ impl Sandbox for WordsTransformer {
         }
     }
 
-    fn view(&mut self) -> Element<Message> {
+    fn view(&mut self) -> Element<'_, Message> {
         let btn_paste = button::Button::new(
             &mut self.ui_states.paste_search_state,
             Text::new("Paste & Search")
