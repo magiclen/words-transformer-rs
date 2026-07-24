@@ -1,34 +1,37 @@
-#[macro_use]
-extern crate lazy_static_include;
-
 mod gui;
 
 #[rustfmt::skip]
 mod logo;
 
+use std::borrow::Cow;
+
 use copypasta::{ClipboardContext, ClipboardProvider};
 use gui::*;
 use iced::{
-    button, canvas, text_input, window, Align, Column, Container, Element, HorizontalAlignment,
-    Length, Row, Sandbox, Settings, Text, VerticalAlignment,
+    alignment::{Horizontal, Vertical},
+    widget::{button, canvas, column, container, row, stack, text, text_input},
+    window, Background, Border, Color, Element, Font, Length, Pixels, Settings, Size, Task, Theme,
 };
+use lazy_static_include::*;
 use word_dictionary::*;
 
-const WINDOW_WIDTH: u32 = 450;
-const WINDOW_HEIGHT: u32 = 420;
-const WINDOW_PADDING: u16 = 20;
-const FONT_SIZE: u16 = 24;
-const CONTROL_SPACING: u16 = 10;
-const INPUT_PADDING: u16 = 8;
-const BUTTON_WIDTH: u16 = 100;
-const BUTTON_HEIGHT: u16 = 36;
+const WINDOW_WIDTH: f32 = 450f32;
+const WINDOW_HEIGHT: f32 = 420f32;
+const WINDOW_PADDING: f32 = 20f32;
+const FONT_SIZE: f32 = 24f32;
+const CONTROL_SPACING: f32 = 10f32;
+const INPUT_PADDING: f32 = 8f32;
+const BUTTON_WIDTH: f32 = 100f32;
+const BUTTON_HEIGHT: f32 = 36f32;
+const CARD_WIDTH: f32 = 320f32;
+
+// The family name embedded in the bundled font, needed to select it as the default font.
+const FONT_NAME: &str = "Source Han Sans HW TC";
 
 lazy_static_include_bytes! {
     /// Source Han Sans HW TC Regular
     FONT => "assets/fonts/SourceHanSansHWTC-Regular.ttf",
 }
-
-// static FONT: &[u8] = include_bytes!("../assets/fonts/SourceHanSansHWTC-Regular2.ttf");
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 enum FoundState {
@@ -37,24 +40,22 @@ enum FoundState {
     Found,
 }
 
+// The modal dialog currently shown on top of the main view, if any.
+#[derive(Debug)]
+enum Modal {
+    None,
+    ConfirmDelete,
+    ConfirmEdit { left: String, right: String },
+    Message(String),
+}
+
 #[derive(Debug, Default)]
 struct UIStates {
-    keyword:            String,
-    keyword_state:      text_input::State,
-    result:             String,
-    result_state:       text_input::State,
-    evolution:          String,
-    evolution_state:    text_input::State,
-    key:                String,
-    key_state:          text_input::State,
-    value:              String,
-    value_state:        text_input::State,
-    paste_search_state: button::State,
-    search_state:       button::State,
-    copy_state:         button::State,
-    next_state:         button::State,
-    delete_state:       button::State,
-    add_state:          button::State,
+    keyword:   String,
+    result:    String,
+    evolution: String,
+    key:       String,
+    value:     String,
 }
 
 #[derive(Debug)]
@@ -64,9 +65,25 @@ struct WordsTransformer {
     find_left:   bool,
     found_state: FoundState,
     ui_states:   UIStates,
+    modal:       Modal,
 }
 
 impl WordsTransformer {
+    fn new() -> Self {
+        let mut dictionary = Dictionary::new("WordsData");
+
+        dictionary.read_data().unwrap();
+
+        WordsTransformer {
+            dictionary,
+            find_index: 0,
+            find_left: false,
+            found_state: FoundState::Default,
+            ui_states: UIStates::default(),
+            modal: Modal::None,
+        }
+    }
+
     fn paste_search(&mut self) {
         let mut ctx = ClipboardContext::new().unwrap();
 
@@ -195,86 +212,27 @@ impl WordsTransformer {
         );
     }
 
-    fn delete(&mut self) {
-        // TODO: Should show up a confirm box to ask the user whether to delete.
-    }
-
-    fn add(&mut self) {
-        let left = self.ui_states.key.trim().to_string();
-        let right = self.ui_states.value.trim().to_string();
-
-        if self.dictionary.find_left_strictly(&left, 0).is_some() {
-            // TODO: Should show up a confirm box to ask the user whether to edit.
-        }
-
-        #[allow(clippy::single_match)]
-        match self.dictionary.add_edit(&left, &right) {
+    // Run the actual add/edit and either refresh the view or surface the error in a message dialog.
+    fn do_add_edit(&mut self, left: &str, right: &str) {
+        match self.dictionary.add_edit(left, right) {
             Ok(_add) => {
                 self.ui_states.key.clear();
                 self.ui_states.value.clear();
 
                 self.search();
             },
-            Err(_) => {
-                // TODO: Should show up a message box to tell the user it failed. But currently, no dialog supports.
+            Err(err) => {
+                self.modal = Modal::Message(err.to_string());
             },
         }
     }
-}
 
-#[derive(Debug, Clone)]
-enum Message {
-    KeywordDataChanged(String),
-    #[allow(dead_code)]
-    ResultDataChanged(String),
-    #[allow(dead_code)]
-    EvolutionDataChanged(String),
-    KeyDataChanged(String),
-    ValueDataChanged(String),
-    PasteSearch,
-    Search,
-    Copy,
-    Next,
-    Delete,
-    Add,
-}
-
-impl Sandbox for WordsTransformer {
-    type Message = Message;
-
-    #[inline]
-    fn new() -> Self {
-        let mut dictionary = Dictionary::new("WordsData");
-
-        dictionary.read_data().unwrap();
-
-        WordsTransformer {
-            dictionary,
-            find_index: 0,
-            find_left: false,
-            found_state: FoundState::Default,
-            ui_states: UIStates::default(),
-        }
-    }
-
-    #[inline]
-    fn title(&self) -> String {
-        String::from("Words Transformer")
-    }
-
-    #[inline]
-    fn update(&mut self, message: Message) {
+    fn update(&mut self, message: Message) -> Task<Message> {
         match message {
             Message::KeywordDataChanged(data) => {
                 self.ui_states.keyword = data;
 
                 self.no_search();
-            },
-            Message::ResultDataChanged(_) => {
-                // read only
-            },
-            Message::EvolutionDataChanged(_) => {
-                // read only
             },
             Message::KeyDataChanged(data) => {
                 self.ui_states.key = data;
@@ -295,231 +253,285 @@ impl Sandbox for WordsTransformer {
                 self.search_next();
             },
             Message::Delete => {
-                self.delete();
+                // Only offer deletion when a word is currently shown.
+                if self.found_state == FoundState::Found {
+                    self.modal = Modal::ConfirmDelete;
+                }
             },
             Message::Add => {
-                self.add();
+                let left = self.ui_states.key.trim().to_string();
+                let right = self.ui_states.value.trim().to_string();
+
+                // Ask before touching an existing entry, otherwise add directly.
+                if self.dictionary.find_left_strictly(&left, 0).is_some() {
+                    self.modal = Modal::ConfirmEdit {
+                        left,
+                        right,
+                    };
+                } else {
+                    self.do_add_edit(&left, &right);
+                }
+            },
+            Message::ModalConfirm => match std::mem::replace(&mut self.modal, Modal::None) {
+                Modal::ConfirmDelete => {
+                    if let Err(err) = self.dictionary.delete(self.find_index) {
+                        self.modal = Modal::Message(err.to_string());
+                    } else {
+                        self.no_search();
+                        self.search();
+                    }
+                },
+                Modal::ConfirmEdit {
+                    left,
+                    right,
+                } => {
+                    self.do_add_edit(&left, &right);
+                },
+                Modal::Message(_) | Modal::None => (),
+            },
+            Message::ModalCancel => {
+                self.modal = Modal::None;
+            },
+        }
+
+        Task::none()
+    }
+
+    fn view(&self) -> Element<'_, Message> {
+        let btn_paste = button(fill_label("Paste & Search"))
+            .width(Length::Fill)
+            .height(Length::FillPortion(1))
+            .on_press(Message::PasteSearch);
+
+        let ti_keyword = text_input("Input a keyword here.", &self.ui_states.keyword)
+            .width(Length::FillPortion(1))
+            .padding(INPUT_PADDING)
+            .on_input(Message::KeywordDataChanged)
+            .on_submit(Message::Search);
+
+        let btn_search = button(fill_label("Search"))
+            .width(Length::Fixed(BUTTON_WIDTH))
+            .height(Length::Fixed(BUTTON_HEIGHT))
+            .on_press(Message::Search);
+
+        let row_keyword =
+            row![ti_keyword, btn_search].spacing(CONTROL_SPACING).align_y(Vertical::Center);
+
+        // The result field is read-only, so it has no `on_input` handler.
+        let ti_result = text_input("Please search a word first.", &self.ui_states.result)
+            .width(Length::FillPortion(1))
+            .padding(INPUT_PADDING);
+
+        let btn_copy = {
+            let btn = button(fill_label("Copy"))
+                .width(Length::Fixed(BUTTON_WIDTH))
+                .height(Length::Fixed(BUTTON_HEIGHT));
+
+            if self.found_state == FoundState::Found {
+                btn.on_press(Message::Copy)
+            } else {
+                btn
+            }
+        };
+
+        let row_result =
+            row![ti_result, btn_copy].spacing(CONTROL_SPACING).align_y(Vertical::Center);
+
+        let ti_evolution = text_input("Please search a word first.", &self.ui_states.evolution)
+            .width(Length::FillPortion(1))
+            .padding(INPUT_PADDING);
+
+        let btn_next = {
+            let btn =
+                button(fill_label("Next")).width(Length::Fill).height(Length::Fixed(BUTTON_HEIGHT));
+
+            if self.found_state == FoundState::Found {
+                btn.on_press(Message::Next)
+            } else {
+                btn
+            }
+        };
+
+        let btn_delete = {
+            let btn = button(fill_label("Delete"))
+                .width(Length::Fill)
+                .height(Length::Fixed(BUTTON_HEIGHT));
+
+            if self.found_state == FoundState::Found {
+                btn.on_press(Message::Delete)
+            } else {
+                btn
+            }
+        };
+
+        let separator = canvas(Separator).width(Length::Fill).height(Length::Fixed(3f32));
+
+        let ti_key = text_input("key", &self.ui_states.key)
+            .width(Length::FillPortion(1))
+            .padding(INPUT_PADDING)
+            .on_input(Message::KeyDataChanged);
+
+        let t_equal = text("=");
+
+        let ti_value = text_input("value", &self.ui_states.value)
+            .width(Length::FillPortion(1))
+            .padding(INPUT_PADDING)
+            .on_input(Message::ValueDataChanged);
+
+        let btn_add = {
+            let btn = button(fill_label("Add/Edit"))
+                .width(Length::Fixed(BUTTON_WIDTH))
+                .height(Length::Fixed(BUTTON_HEIGHT));
+
+            if self.ui_states.key.trim().is_empty() || self.ui_states.value.trim().is_empty() {
+                btn
+            } else {
+                btn.on_press(Message::Add)
+            }
+        };
+
+        let row_add = row![ti_key, t_equal, ti_value, btn_add]
+            .spacing(CONTROL_SPACING)
+            .align_y(Vertical::Center);
+
+        let t_count = text(self.dictionary.count().to_string());
+
+        let row_bottom = row![t_count].spacing(CONTROL_SPACING).align_y(Vertical::Top);
+
+        let content = column![
+            btn_paste,
+            row_keyword,
+            row_result,
+            ti_evolution,
+            btn_next,
+            btn_delete,
+            separator,
+            row_add,
+            row_bottom,
+        ]
+        .spacing(CONTROL_SPACING)
+        .align_x(Horizontal::Center);
+
+        let base = container(content)
+            .padding(WINDOW_PADDING)
+            .center_x(Length::Fill)
+            .center_y(Length::Fill);
+
+        match &self.modal {
+            Modal::None => base.into(),
+            Modal::ConfirmDelete => {
+                modal_stack(base.into(), dialog_card("Delete this word?".to_string(), true))
+            },
+            Modal::ConfirmEdit {
+                left, ..
+            } => modal_stack(
+                base.into(),
+                dialog_card(format!("\"{left}\" already exists. Add this translation?"), true),
+            ),
+            Modal::Message(message) => {
+                modal_stack(base.into(), dialog_card(message.clone(), false))
             },
         }
     }
+}
 
-    fn view(&mut self) -> Element<'_, Message> {
-        let btn_paste = button::Button::new(
-            &mut self.ui_states.paste_search_state,
-            Text::new("Paste & Search")
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .horizontal_alignment(HorizontalAlignment::Center)
-                .vertical_alignment(VerticalAlignment::Center),
-        )
-        .width(Length::Fill)
-        .height(Length::FillPortion(1))
-        .on_press(Message::PasteSearch);
+#[derive(Debug, Clone)]
+enum Message {
+    KeywordDataChanged(String),
+    KeyDataChanged(String),
+    ValueDataChanged(String),
+    PasteSearch,
+    Search,
+    Copy,
+    Next,
+    Delete,
+    Add,
+    ModalConfirm,
+    ModalCancel,
+}
 
-        let ti_keyword = text_input::TextInput::new(
-            &mut self.ui_states.keyword_state,
-            "Input a keyword here.",
-            &self.ui_states.keyword,
-            Message::KeywordDataChanged,
-        )
-        .width(Length::FillPortion(1))
-        .padding(INPUT_PADDING)
-        .on_submit(Message::Search);
+// A text label that fills its parent and is centered on both axes, used inside buttons.
+fn fill_label(label: &str) -> Element<'_, Message> {
+    text(label).width(Length::Fill).height(Length::Fill).center().into()
+}
 
-        let btn_search = button::Button::new(
-            &mut self.ui_states.search_state,
-            Text::new("Search")
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .horizontal_alignment(HorizontalAlignment::Center)
-                .vertical_alignment(VerticalAlignment::Center),
-        )
-        .width(Length::Units(BUTTON_WIDTH))
-        .height(Length::Units(BUTTON_HEIGHT))
-        .on_press(Message::Search);
-
-        let row_keyword = Row::new()
-            .width(Length::Fill)
-            .height(Length::Shrink)
-            .spacing(CONTROL_SPACING)
-            .align_items(Align::Center)
-            .push(ti_keyword)
-            .push(btn_search);
-
-        let ti_result = text_input::TextInput::new(
-            &mut self.ui_states.result_state,
-            "Please search a word first.",
-            &self.ui_states.result,
-            Message::ResultDataChanged,
-        )
-        .width(Length::FillPortion(1))
-        .padding(INPUT_PADDING);
-
-        let btn_copy = button::Button::new(
-            &mut self.ui_states.copy_state,
-            Text::new("Copy")
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .horizontal_alignment(HorizontalAlignment::Center)
-                .vertical_alignment(VerticalAlignment::Center),
-        )
-        .width(Length::Units(BUTTON_WIDTH))
-        .height(Length::Units(BUTTON_HEIGHT));
-
-        let btn_copy = if self.found_state == FoundState::Found {
-            btn_copy.on_press(Message::Copy)
-        } else {
-            btn_copy
-        };
-
-        let row_result = Row::new()
-            .width(Length::Fill)
-            .height(Length::Shrink)
-            .spacing(CONTROL_SPACING)
-            .align_items(Align::Center)
-            .push(ti_result)
-            .push(btn_copy);
-
-        let ti_evolution = text_input::TextInput::new(
-            &mut self.ui_states.evolution_state,
-            "Please search a word first.",
-            &self.ui_states.evolution,
-            Message::EvolutionDataChanged,
-        )
-        .width(Length::FillPortion(1))
-        .padding(INPUT_PADDING);
-
-        let btn_next = button::Button::new(
-            &mut self.ui_states.next_state,
-            Text::new("Next")
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .horizontal_alignment(HorizontalAlignment::Center)
-                .vertical_alignment(VerticalAlignment::Center),
-        )
-        .width(Length::Fill)
-        .height(Length::Units(BUTTON_HEIGHT));
-
-        let btn_next = if self.found_state == FoundState::Found {
-            btn_next.on_press(Message::Next)
-        } else {
-            btn_next
-        };
-
-        let btn_delete = button::Button::new(
-            &mut self.ui_states.delete_state,
-            Text::new("Delete")
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .horizontal_alignment(HorizontalAlignment::Center)
-                .vertical_alignment(VerticalAlignment::Center),
-        )
-        .width(Length::Fill)
-        .height(Length::Units(BUTTON_HEIGHT));
-
-        let btn_delete = if self.found_state == FoundState::Found {
-            btn_delete.on_press(Message::Delete)
-        } else {
-            btn_delete
-        };
-
-        let separator = canvas::Canvas::new(Separator).width(Length::Fill).height(Length::Units(3));
-
-        let ti_key = text_input::TextInput::new(
-            &mut self.ui_states.key_state,
-            "key",
-            &self.ui_states.key,
-            Message::KeyDataChanged,
-        )
-        .width(Length::FillPortion(1))
-        .padding(INPUT_PADDING);
-
-        let t_equal = Text::new("=");
-
-        let ti_value = text_input::TextInput::new(
-            &mut self.ui_states.value_state,
-            "value",
-            &self.ui_states.value,
-            Message::ValueDataChanged,
-        )
-        .width(Length::FillPortion(1))
-        .padding(INPUT_PADDING);
-
-        let btn_add = button::Button::new(
-            &mut self.ui_states.add_state,
-            Text::new("Add/Edit")
-                .width(Length::Fill)
-                .height(Length::Fill)
-                .horizontal_alignment(HorizontalAlignment::Center)
-                .vertical_alignment(VerticalAlignment::Center),
-        )
-        .width(Length::Units(BUTTON_WIDTH))
-        .height(Length::Units(BUTTON_HEIGHT));
-
-        let btn_add =
-            if self.ui_states.key.trim().is_empty() || self.ui_states.value.trim().is_empty() {
-                btn_add
-            } else {
-                btn_add.on_press(Message::Add)
-            };
-
-        let row_add = Row::new()
-            .width(Length::Fill)
-            .height(Length::Shrink)
-            .spacing(CONTROL_SPACING)
-            .align_items(Align::Center)
-            .push(ti_key)
-            .push(t_equal)
-            .push(ti_value)
-            .push(btn_add);
-
-        let t_count = Text::new(format!("{}", self.dictionary.count()));
-
-        let row_bottom = Row::new()
-            .width(Length::Fill)
-            .height(Length::Shrink)
-            .spacing(CONTROL_SPACING)
-            .align_items(Align::Start)
-            .push(t_count);
-
-        let content = Column::new()
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .spacing(CONTROL_SPACING)
-            .align_items(Align::Center)
-            .push(btn_paste)
-            .push(row_keyword)
-            .push(row_result)
-            .push(ti_evolution)
-            .push(btn_next)
-            .push(btn_delete)
-            .push(separator)
-            .push(row_add)
-            .push(row_bottom);
-
-        Container::new(content)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .padding(WINDOW_PADDING)
-            .center_x()
-            .center_y()
-            .into()
+// The dimmed background of a modal, styled to intercept clicks meant for the base view.
+fn overlay_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(Color::from_rgba(0f32, 0f32, 0f32, 0.5f32))),
+        ..container::Style::default()
     }
 }
 
-fn main() -> Result<(), iced::Error> {
-    WordsTransformer::run(Settings {
-        window: window::Settings {
-            size: (WINDOW_WIDTH, WINDOW_HEIGHT),
-            always_on_top: true,
-            icon: Some(
-                window::Icon::from_rgba(logo::DATA.to_vec(), logo::WIDTH, logo::HEIGHT)
-                    .map_err(|err| iced::Error::WindowCreationFailed(Box::new(err)))?,
-            ),
-            ..window::Settings::default()
+// The card that holds the message and buttons of a modal.
+fn card_style(_theme: &Theme) -> container::Style {
+    container::Style {
+        background: Some(Background::Color(Color::WHITE)),
+        border: Border {
+            color:  Color::from_rgb(0.7f32, 0.7f32, 0.7f32),
+            width:  1f32,
+            radius: 6f32.into(),
         },
-        default_font: Some(*FONT),
-        default_text_size: FONT_SIZE,
+        ..container::Style::default()
+    }
+}
+
+// Build a modal card with a message and either No/Yes (confirm) or a single OK button.
+fn dialog_card<'a>(message: String, confirm: bool) -> Element<'a, Message> {
+    let buttons = if confirm {
+        row![
+            button(fill_label("No"))
+                .width(Length::Fixed(BUTTON_WIDTH))
+                .height(Length::Fixed(BUTTON_HEIGHT))
+                .on_press(Message::ModalCancel),
+            button(fill_label("Yes"))
+                .width(Length::Fixed(BUTTON_WIDTH))
+                .height(Length::Fixed(BUTTON_HEIGHT))
+                .on_press(Message::ModalConfirm),
+        ]
+    } else {
+        row![button(fill_label("OK"))
+            .width(Length::Fixed(BUTTON_WIDTH))
+            .height(Length::Fixed(BUTTON_HEIGHT))
+            .on_press(Message::ModalCancel)]
+    }
+    .spacing(CONTROL_SPACING);
+
+    let body = column![text(message).width(Length::Fill), buttons]
+        .spacing(CONTROL_SPACING)
+        .align_x(Horizontal::Center);
+
+    container(body)
+        .width(Length::Fixed(CARD_WIDTH))
+        .padding(WINDOW_PADDING)
+        .style(card_style)
+        .into()
+}
+
+// Layer a modal card, over a dimmed overlay, over the base view.
+fn modal_stack<'a>(base: Element<'a, Message>, card: Element<'a, Message>) -> Element<'a, Message> {
+    let overlay =
+        container(card).center_x(Length::Fill).center_y(Length::Fill).style(overlay_style);
+
+    stack![base, overlay].into()
+}
+
+fn main() -> iced::Result {
+    let settings = Settings {
+        fonts: vec![Cow::Borrowed(*FONT)],
+        default_font: Font::with_name(FONT_NAME),
+        default_text_size: Pixels(FONT_SIZE),
         ..Settings::default()
-    })
+    };
+
+    iced::application(WordsTransformer::new, WordsTransformer::update, WordsTransformer::view)
+        .title("Words Transformer")
+        .settings(settings)
+        .window(window::Settings {
+            size: Size::new(WINDOW_WIDTH, WINDOW_HEIGHT),
+            level: window::Level::AlwaysOnTop,
+            icon: window::icon::from_rgba(logo::DATA.to_vec(), logo::WIDTH, logo::HEIGHT).ok(),
+            ..window::Settings::default()
+        })
+        .run()
 }
