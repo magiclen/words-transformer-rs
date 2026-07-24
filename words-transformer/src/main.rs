@@ -9,7 +9,9 @@ use copypasta::{ClipboardContext, ClipboardProvider};
 use gui::*;
 use iced::{
     alignment::{Horizontal, Vertical},
-    widget::{button, canvas, column, container, row, stack, text, text_input},
+    widget::{
+        button, canvas, center, column, container, mouse_area, opaque, row, stack, text, text_input,
+    },
     window, Background, Border, Color, Element, Font, Length, Pixels, Settings, Size, Task, Theme,
 };
 use lazy_static_include::*;
@@ -292,6 +294,7 @@ impl WordsTransformer {
             Message::ModalCancel => {
                 self.modal = Modal::None;
             },
+            Message::Ignore => (),
         }
 
         Task::none()
@@ -319,10 +322,11 @@ impl WordsTransformer {
             .spacing(CONTROL_SPACING)
             .align_y(Vertical::Center);
 
-        // The result field is read-only, so it has no `on_input` handler.
+        // The result and evolution fields are read-only; their input is ignored so they stay selectable but not editable.
         let ti_result = text_input("Please search a word first.", &self.ui_states.result)
             .width(Length::FillPortion(1))
-            .padding(INPUT_PADDING);
+            .padding(INPUT_PADDING)
+            .on_input(|_| Message::Ignore);
 
         let btn_copy = {
             let btn = button(fill_label("Copy"))
@@ -343,7 +347,8 @@ impl WordsTransformer {
 
         let ti_evolution = text_input("Please search a word first.", &self.ui_states.evolution)
             .width(Length::FillPortion(1))
-            .padding(INPUT_PADDING);
+            .padding(INPUT_PADDING)
+            .on_input(|_| Message::Ignore);
 
         let btn_next = {
             let btn =
@@ -456,6 +461,7 @@ enum Message {
     Add,
     ModalConfirm,
     ModalCancel,
+    Ignore,
 }
 
 // A text label that fills its parent and is centered on both axes, used inside buttons.
@@ -463,7 +469,7 @@ fn fill_label(label: &str) -> Element<'_, Message> {
     text(label).width(Length::Fill).height(Length::Fill).center().into()
 }
 
-// The dimmed background of a modal, styled to intercept clicks meant for the base view.
+// The dimmed background drawn behind a modal card.
 fn overlay_style(_theme: &Theme) -> container::Style {
     container::Style {
         background: Some(Background::Color(Color::from_rgba(0f32, 0f32, 0f32, 0.5f32))),
@@ -517,9 +523,10 @@ fn dialog_card<'a>(message: String, confirm: bool) -> Element<'a, Message> {
 }
 
 // Layer a modal card, over a dimmed overlay, over the base view.
+// The `opaque` and `mouse_area` wrappers make the overlay swallow every event so the base view cannot be interacted with while a modal is open.
 fn modal_stack<'a>(base: Element<'a, Message>, card: Element<'a, Message>) -> Element<'a, Message> {
     let overlay =
-        container(card).center_x(Length::Fill).center_y(Length::Fill).style(overlay_style);
+        opaque(mouse_area(center(opaque(card)).style(overlay_style)).on_press(Message::Ignore));
 
     stack![base, overlay].into()
 }
