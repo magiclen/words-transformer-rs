@@ -16,7 +16,7 @@ use lazy_static_include::*;
 use word_dictionary::*;
 
 const WINDOW_WIDTH: f32 = 450f32;
-const WINDOW_HEIGHT: f32 = 420f32;
+const WINDOW_HEIGHT: f32 = 470f32;
 const WINDOW_PADDING: f32 = 20f32;
 const FONT_SIZE: f32 = 24f32;
 const CONTROL_SPACING: f32 = 10f32;
@@ -314,8 +314,10 @@ impl WordsTransformer {
             .height(Length::Fixed(BUTTON_HEIGHT))
             .on_press(Message::Search);
 
-        let row_keyword =
-            row![ti_keyword, btn_search].spacing(CONTROL_SPACING).align_y(Vertical::Center);
+        let row_keyword = row![ti_keyword, btn_search]
+            .width(Length::Fill)
+            .spacing(CONTROL_SPACING)
+            .align_y(Vertical::Center);
 
         // The result field is read-only, so it has no `on_input` handler.
         let ti_result = text_input("Please search a word first.", &self.ui_states.result)
@@ -334,8 +336,10 @@ impl WordsTransformer {
             }
         };
 
-        let row_result =
-            row![ti_result, btn_copy].spacing(CONTROL_SPACING).align_y(Vertical::Center);
+        let row_result = row![ti_result, btn_copy]
+            .width(Length::Fill)
+            .spacing(CONTROL_SPACING)
+            .align_y(Vertical::Center);
 
         let ti_evolution = text_input("Please search a word first.", &self.ui_states.evolution)
             .width(Length::FillPortion(1))
@@ -391,12 +395,14 @@ impl WordsTransformer {
         };
 
         let row_add = row![ti_key, t_equal, ti_value, btn_add]
+            .width(Length::Fill)
             .spacing(CONTROL_SPACING)
             .align_y(Vertical::Center);
 
         let t_count = text(self.dictionary.count().to_string());
 
-        let row_bottom = row![t_count].spacing(CONTROL_SPACING).align_y(Vertical::Top);
+        let row_bottom =
+            row![t_count].width(Length::Fill).spacing(CONTROL_SPACING).align_y(Vertical::Top);
 
         let content = column![
             btn_paste,
@@ -409,6 +415,8 @@ impl WordsTransformer {
             row_add,
             row_bottom,
         ]
+        .width(Length::Fill)
+        .height(Length::Fill)
         .spacing(CONTROL_SPACING)
         .align_x(Horizontal::Center);
 
