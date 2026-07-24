@@ -3,7 +3,7 @@ name = "word-dictionary"
 version = "0.1.2"
 authors = ["Magic Len <len@magiclen.org>"]
 edition = "2021"
-rust-version = "1.62"
+rust-version = "1.89"
 repository = "https://github.com/magiclen/words-transformer-rs"
 homepage = "https://magiclen.org/words-transformer-rs"
 keywords = ["translation", "dictionary"]
@@ -13,7 +13,7 @@ license = "MIT"
 include = ["src/**/*", "Cargo.toml", "README.md", "LICENSE"]
 
 [dependencies]
-trim-in-place = "0.1.5"
+trim-in-place = "0.2"
 
 [dev-dependencies]
 slash-formatter = "3.1"
